@@ -37,6 +37,7 @@ ARG TERRAGRUNT_VERSION=${TERRAGRUNT_VERSION:-false}
 ARG TERRASCAN_VERSION=${TERRASCAN_VERSION:-false}
 ARG TFLINT_VERSION=${TFLINT_VERSION:-false}
 ARG TFSEC_VERSION=${TFSEC_VERSION:-false}
+ARG TRIVY_VERSION=${TRIVY_VERSION:-false}
 ARG TFUPDATE_VERSION=${TFUPDATE_VERSION:-false}
 ARG HCLEDIT_VERSION=${HCLEDIT_VERSION:-false}
 
@@ -136,6 +137,15 @@ RUN . /.env && \
     ) && chmod +x tfsec \
     ; fi
 
+# Trivy
+RUN . /.env && \
+    if [ "$TRIVY_VERSION" != "false" ]; then \
+    ( \
+        TRIVY_RELEASES="https://api.github.com/repos/aquasecurity/trivy/releases" && \
+        [ "$TRIVY_VERSION" = "latest" ] && curl -L "$(curl -s ${TRIVY_RELEASES}/latest | grep -o -E -m 1 "https://.+?/trivy-${TARGETOS}-${TARGETARCH}")" > trivy \
+        || curl -L "$(curl -s ${TRIVY_RELEASES} | grep -o -E -m 1 "https://.+?v${TRIVY_VERSION}/trivy-${TARGETOS}-${TARGETARCH}")" > trivy \
+    ) && chmod +x trivy \
+    ; fi
 # TFUpdate
 RUN . /.env && \
     if [ "$TFUPDATE_VERSION" != "false" ]; then \
@@ -168,6 +178,7 @@ RUN . /.env && \
     (if [ "$TERRASCAN_VERSION"      != "false" ]; then echo "terrascan $(./terrascan version)" >> $F; else echo "terrascan SKIPPED" >> $F      ; fi) && \
     (if [ "$TFLINT_VERSION"         != "false" ]; then ./tflint --version >> $F;                      else echo "tflint SKIPPED" >> $F         ; fi) && \
     (if [ "$TFSEC_VERSION"          != "false" ]; then echo "tfsec $(./tfsec --version)" >> $F;       else echo "tfsec SKIPPED" >> $F          ; fi) && \
+    (if [ "$TRIVY_VERSION"          != "false" ]; then echo "trivy $(./trivy --version)" >> $F;       else echo "trivy SKIPPED" >> $F          ; fi) && \
     (if [ "$TFUPDATE_VERSION"       != "false" ]; then echo "tfupdate $(./tfupdate --version)" >> $F; else echo "tfupdate SKIPPED" >> $F       ; fi) && \
     (if [ "$HCLEDIT_VERSION"        != "false" ]; then echo "hcledit $(./hcledit version)" >> $F;     else echo "hcledit SKIPPED" >> $F       ; fi) && \
     echo -e "\n\n" && cat $F && echo -e "\n\n"
